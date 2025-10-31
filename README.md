@@ -1,108 +1,145 @@
-# Simulación de Propagación de WannaCry con Modelo SIRP
+# Simulación de Propagación de WannaCry con Modelo SIRP (RK4)
 
-Este proyecto implementa un modelo matemático SIRP (Susceptibles-Infectados-Removidos-Protegidos) para simular la propagación del ransomware WannaCry en una red de computadoras, demostrando el impacto de diferentes estrategias de mitigación como kill-switch, parcheo y cuarentena.
+Este proyecto implementa una simulación de la propagación del ransomware WannaCry
+usando un modelo epidemiológico SIRP (Susceptibles, Infectados, Removidos, Protegidos).
+La integración del sistema de ecuaciones diferenciales se realiza con
+Runge–Kutta de 4º orden (RK4) implementado manualmente, sin depender de SciPy.
 
-## Descripción del Proyecto
+## Contenidos del repositorio
 
-El proyecto modela la propagación de WannaCry en una red LAN homogénea de 256 equipos utilizando ecuaciones diferenciales que representan los estados SIRP:
+- `modelo_sirp_rk4.py`: implementación del modelo SIRP, simulación de escenarios,
+  gráficas y animaciones de propagación en red.
+- `interfaz_interactiva_rk4.py`: interfaz basada en `ipywidgets` para explorar
+  escenarios y visualizar resultados dentro de Jupyter.
+- `simulacion_wannacry_rk4.ipynb`: notebook que ejecuta la simulación completa,
+  genera visualizaciones y lanza la interfaz interactiva.
+- `animacion_*.mp4`: archivos de video con las animaciones por escenario.
+- `executed_notebook.ipynb`: notebook ya ejecutado (salida generada por nbconvert).
 
-- **S (Susceptibles)**: Equipos vulnerables que pueden ser infectados
-- **I (Infectados)**: Equipos activamente infectados que pueden propagar el malware
-- **R (Removidos)**: Equipos que han sido limpiados y no pueden reinfectarse
-- **P (Protegidos)**: Equipos que han sido parcheados y son inmunes a la infección
+## Modelo SIRP
 
-## Modelo Matemático
+- `S` (Susceptibles): equipos vulnerables al contagio.
+- `I` (Infectados): equipos afectados por el ransomware.
+- `R` (Removidos): equipos limpiados o que salen de la red.
+- `P` (Protegidos): equipos parcheados o con mitigación activa.
 
-El modelo utiliza las siguientes ecuaciones diferenciales:
+Medidas y parámetros principales:
+- `beta0`: tasa de contagio base.
+- `kappa`: reducción de contagio tras activar el kill-switch en `t_k`.
+- `gamma`: tasa de limpieza (I→R).
+- `q`: tasa adicional de salida de infectados por cuarentena (I→R).
+- `u_p`: tasa de parcheo (S→P) activa desde `t_parcheo`.
+- `omega_P`: pérdida de protección (P→S).
 
-```
-Incidencia: λ(t) = β(t) · I/N, con 
-β(t) = β0 si t < t_k; y β(t) = κ·β0 si t ≥ t_k (con κ = 0.1, t_k = 5 min) 
-
-Sistema SIRP (1er orden): 
-dS/dt = –λ(t)·S – u_p·S + ω_P·P 
-dI/dt = λ(t)·S – (γ + q)·I 
-dR/dt = (γ + q)·I 
-dP/dt = u_p·S – ω_P·P 
-```
-
-### Parámetros del Modelo
-
-- **β0 = 0.36**: Tasa de contagio base (antes del kill-switch)
-- **κ = 0.10**: Factor de reducción tras activar el kill-switch
-- **t_k = 5**: Minuto de activación del kill-switch
-- **γ = 0.12**: Tasa de limpieza
-- **q = 0.06**: Tasa de cuarentena efectiva
-- **u_p = 0.30**: Tasa de parcheo (cuando está activo)
-- **ω_P = 0.0002**: Tasa de pérdida de protección
-
-## Escenarios Simulados
-
-El proyecto simula cinco escenarios diferentes:
-
-1. **Baseline (sin control)**: Sin medidas de mitigación
-2. **Kill-switch**: Reducción de la tasa de contagio al 10% en t=5 min
-3. **Parcheo**: Aplicación de parches desde t=1 min
-4. **Cuarentena**: Aislamiento de equipos infectados
-5. **Combinado**: Kill-switch + parcheo + cuarentena
+Escenarios incluidos:
+- `baseline`: sin mitigaciones.
+- `kill_switch`: kill-switch que reduce contagio a partir de `t_k`.
+- `parcheo`: parcheo progresivo desde `t_parcheo` a tasa `u_p`.
+- `cuarentena`: cuarentena con tasa `q`.
+- `combinado`: combinación de las medidas anteriores.
 
 ## Requisitos
 
-```
-numpy==1.24.3
-scipy==1.10.1
-matplotlib==3.7.1
-networkx==3.1
-tqdm==4.65.0
-ipywidgets==8.0.6
-```
+Recomendado: Python 3.8+.
 
-## Estructura del Proyecto
+Dependencias Python:
+- `numpy`, `matplotlib`, `networkx`, `tqdm`, `ipywidgets`, `nbconvert`.
 
-- `modelo_sirp.py`: Implementación del modelo matemático SIRP
-- `interfaz_interactiva.py`: Interfaz para explorar los resultados de forma interactiva
-- `simulacion_wannacry.ipynb`: Notebook Jupyter para ejecutar las simulaciones
-- `requirements.txt`: Dependencias del proyecto
+Para exportar animaciones MP4:
+- `ffmpeg` instalado y disponible en el PATH.
 
-## Uso
-
-### Ejecución desde línea de comandos
+Instalación rápida de dependencias (ejemplos):
 
 ```bash
-# Instalar dependencias
-pip install -r requirements.txt
-
-# Ejecutar simulación
-python modelo_sirp.py
+python -m pip install numpy matplotlib networkx tqdm ipywidgets nbconvert
+# En macOS, instalar ffmpeg (ejemplo con Homebrew):
+brew install ffmpeg
 ```
 
-### Uso del Notebook Jupyter
+Habilitar ipywidgets en Jupyter Lab si fuese necesario:
 
 ```bash
-# Iniciar Jupyter Notebook
-jupyter notebook simulacion_wannacry.ipynb
+jupyter nbextension enable --py widgetsnbextension
 ```
 
-### Interfaz Interactiva
+## Uso rápido
 
-La interfaz interactiva permite:
-- Seleccionar diferentes escenarios
-- Ajustar parámetros del modelo
-- Visualizar curvas SIRP y animaciones de propagación
+### Ejecutar el notebook
 
-## Resultados
+1. Abrir `simulacion_wannacry_rk4.ipynb` en Jupyter.
+2. Ejecutar todas las celdas para simular escenarios, ver las curvas y abrir la interfaz.
 
-El proyecto genera:
+Alternativa por CLI (ejecuta y guarda resultado):
 
-1. **Gráficas de curvas SIRP**: Evolución temporal de los estados S, I, R y P
-2. **Animaciones de propagación**: Visualización de la propagación en la red
-3. **Comparativas entre escenarios**: Análisis del impacto de las diferentes estrategias
+```bash
+jupyter nbconvert --to notebook --execute simulacion_wannacry_rk4.ipynb --output executed_notebook.ipynb
+```
 
-## Análisis de Umbral
+### Iniciar la interfaz interactiva
 
-- **Número reproductivo básico**: R0 = β0/(γ+q) = 0.36/0.18 = 2.0
-- **Protección crítica**: p_c = 1 − 1/R0 = 0.5 (proteger ≥ 50% del parque)
+- En el notebook, ejecutar la celda con:
 
-## Autor
+```python
+from interfaz_interactiva_rk4 import iniciar_interfaz
+interfaz = iniciar_interfaz()
+```
 
-Este proyecto fue desarrollado como parte de un estudio sobre modelado epidemiológico aplicado a la ciberseguridad.
+La interfaz permite:
+- Seleccionar escenario.
+- Ajustar parámetros (`beta0`, `kappa`, `gamma`, `q`, `u_p`).
+- Visualizar curvas SIRP o la animación de propagación en red.
+
+### Generar animaciones MP4
+
+Desde el notebook o script:
+
+```python
+from modelo_sirp_rk4 import ModeloSIRP
+modelo = ModeloSIRP()
+modelo.simular_todos_escenarios()
+for escenario in modelo.escenarios:
+    print(f"Creando animación para escenario: {escenario}")
+    modelo.animar_propagacion(escenario, guardar=True)
+```
+
+Genera archivos `animacion_<escenario>.mp4` (requiere `ffmpeg`).
+
+## Ejemplo de uso programático
+
+```python
+from modelo_sirp_rk4 import ModeloSIRP
+
+modelo = ModeloSIRP()
+modelo.simular_escenario('baseline')
+fig, axs = modelo.graficar_curvas(['baseline'])
+```
+
+## Notas de implementación
+
+- Integración RK4 manual con corrección numérica: se recorta a no negativos y
+  se reescala para conservar aproximadamente la población total `N`.
+- La animación usa un grafo Watts–Strogatz para visualización (no es la red real).
+- Los docstrings en `modelo_sirp_rk4.py` y `interfaz_interactiva_rk4.py` explican
+  parámetros, retornos y comportamiento de cada método.
+
+## Estructura del proyecto
+
+```
+├── modelo_sirp_rk4.py
+├── interfaz_interactiva_rk4.py
+├── simulacion_wannacry_rk4.ipynb
+├── executed_notebook.ipynb
+└── animacion_*.mp4
+```
+
+## Solución de problemas
+
+- Error de nbconvert sobre formato: asegúrate de que las celdas de código del notebook
+  incluyen la clave `outputs` (el notebook provisto está corregido).
+- Falta `ffmpeg`: instálalo y verifica que `ffmpeg -version` funciona en tu terminal.
+- Widgets sin mostrarse: habilita `widgetsnbextension` o usa Jupyter clásico.
+
+## Licencia
+
+Este proyecto es para fines educativos y de simulación. Agrega la licencia
+que prefieras si planeas distribuirlo.
