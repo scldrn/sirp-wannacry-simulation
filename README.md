@@ -141,5 +141,4 @@ fig, axs = modelo.graficar_curvas(['baseline'])
 
 ## Licencia
 
-Este proyecto es para fines educativos y de simulación. Agrega la licencia
-que prefieras si planeas distribuirlo.
+Este proyecto es para fines educativos y de simulación.
